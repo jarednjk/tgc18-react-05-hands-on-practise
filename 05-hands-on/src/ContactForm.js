@@ -1,14 +1,35 @@
-import React from 'react'
+import React from 'react';
+import axios from 'axios';
 
 export default class ContactForm extends React.Component {
+
+    async componentDidMount() {
+        let enquiryRequest = axios.get('/enquiries.json');
+        let countryRequest = axios.get('/countries.json');
+        let contactRequest = axios.get('/contacts.json');
+
+        let [enquiryResponse, countryResponse, contactResponse] = await axios.all([enquiryRequest, countryRequest, contactRequest]);
+
+        this.setState({
+            allEnquiries: enquiryResponse.data,
+            allCountries: countryResponse.data,
+            allContacts: contactResponse.data,
+            loaded: true
+        })
+    }
+
     // the state variables are the data that component has responsbility for
     // make sure that there are no derived values
     state = {
         firstName: '',
         lastName: '',
-        enquiry:'',
-        country:'singapore',
-        contacts:[]
+        enquiry: 'support',
+        country: 'singapore',
+        contacts: [],
+        allCountries: [],
+        allEnquiries: [],
+        allContacts: [],
+        loaded: false
     }
 
     // make sure event handlers (i.e functions that are called in response to an event happening)
@@ -70,72 +91,64 @@ export default class ContactForm extends React.Component {
     }
 
     render() {
-        // 1. make sure do not call setState in the render function
-        // under any circumistances
-        // 2. derived values should go into render
-        return (<div>
-                    <div>
-                        <label>First Name:</label>
-                        <input type="text" 
-                               value={this.state.firstName}
-                               onChange={this.updateFirstName}
-                        />
-                    </div>
-                    <div>
-                        <label>Last Name:</label>
-                        <input type="text"
-                               value={this.state.lastName}
-                               onChange={this.updateLastName}
-                            
-                        />
-                    </div>
-                    <div>
-                        <label>Type of enquiry</label>
 
+        if (this.state.loaded){
+
+            // 1. make sure do not call setState in the render function
+            // under any circumistances
+            // 2. derived values should go into render
+            return (<div>
+                <div>
+                    <label>First Name:</label>
+                    <input type="text"
+                        value={this.state.firstName}
+                        onChange={this.updateFirstName}
+                    />
+                </div>
+                <div>
+                    <label>Last Name:</label>
+                    <input type="text"
+                        value={this.state.lastName}
+                        onChange={this.updateLastName}
+    
+                    />
+                </div>
+                <div>
+                    <label>Type of enquiry</label>
+                    {this.state.allEnquiries.map ( enquiry => <React.Fragment key={enquiry.value}>
                         <input type="radio"
                                name="enquiry"
-                               value="support"
+                               value={enquiry.value}
                                onChange={this.updateEnquiry}
-                               checked={this.state.enquiry === "support"}
-                               />
-                        <label>Support</label>
+                               checked={this.state.enquiry === enquiry.value} />
+                        <label>{enquiry.display}</label>
+                    </React.Fragment>)}
+                </div>
+    
+                <div>
+                    <select value={this.state.country} onChange={this.updateCountry}>
+                        {this.state.allCountries.map(country => <React.Fragment key={country.value}>
+                            <option value={country.value}>{country.display}</option>
+                        </React.Fragment>)}
+                    </select>
+                </div>
+    
+                <div>
+                    {this.state.allContacts.map(contact => <React.Fragment key={contact.value}>
+                        <input type="checkbox"
+                            value={contact.value}
+                            onChange={this.updateContacts}
+                            // checked={this.state.contacts.includes(contact.value)}
+                            checked={this.updateContacts === contact.value} />
+                        <label>{contact.display}</label>
+                    </React.Fragment>)}
+                </div>
+    
+            </div>) 
+        } else {
+            return <p>Loading...</p>
+        }
 
-                        <input type="radio"
-                               name="enquiry"
-                               value="sales"
-                               onChange={this.updateEnquiry}
-                               checked={this.state.enquiry==='sales'}
-                               />
-                        <label>Sales</label>
-
-                        <input type="radio"
-                               name="enquiry"
-                               value="marketing"
-                               onChange={this.updateEnquiry}
-                               checked={this.state.enquiry==='marketing'}
-                               />
-                        <label>Marketing</label>
-                    </div>
-
-                    <div>
-                        <select value={this.state.country} onChange={this.updateCountry}>
-                            <option value="singapore">Singapore</option>
-                            <option value="thailand">Thailand</option>
-                            <option value="laos">Laos</option>
-                            <option value="cambodia">Cambodia</option>
-                        </select>
-                    </div>
-                        
-                    <div>
-                        <input type="checkbox" value="email" onChange={this.updateContacts} checked={this.state.contacts.includes('email')}/>
-                        <label>Email</label>
-
-                        <input type="checkbox" value="phone" onChange={this.updateContacts} checked={this.state.contacts.includes('phone')}/>
-                        <label>Phone</label>
-
-                        <input type="checkbox" value="slow-mail" onChange={this.updateContacts} checked={this.state.contacts.includes('slow-mail')}/>
-                        <label>Slow mail</label>
-                    </div>
-            </div>)
+        
     }
 }
